@@ -3,27 +3,19 @@
   // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
-  var admin = require("firebase-admin");
-
-var serviceAccount = require("path/to/serviceAccountKey.json");
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://mi-taller-1fdd6-default-rtdb.firebaseio.com"
-});
-
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
   // Your web app's Firebase configuration
   // For Firebase JS SDK v7.20.0 and later, measurementId is optional
   const firebaseConfig = {
-    apiKey: "AIzaSyC5ILMLM7lkAt9peWDd1GVgm-iQfEfPh5E",
-    authDomain: "mi-taller-1fdd6.firebaseapp.com",
-    databaseURL: "https://mi-taller-1fdd6-default-rtdb.firebaseio.com",
-    projectId: "mi-taller-1fdd6",
-    storageBucket: "mi-taller-1fdd6.firebasestorage.app",
-    messagingSenderId: "788590868790",
-    appId: "1:788590868790:web:3e80ca767254c685b01b97",
-    measurementId: "G-C8SKVYSTZF"
+    apiKey: "AIzaSyDbWrR0i5Mp0otn6Caq7PHG1ufzE_cAxmk",
+    authDomain: "mi-taller-3ea2b.firebaseapp.com",
+    projectId: "mi-taller-3ea2b",
+    storageBucket: "mi-taller-3ea2b.firebasestorage.app",
+    messagingSenderId: "1083751146344",
+    appId: "1:1083751146344:web:77395408533a8690ddecdd",
+    measurementId: "G-E00FX4MTRE"
   };
 
   // Initialize Firebase
