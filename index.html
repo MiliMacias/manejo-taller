@@ -100,17 +100,5 @@
         const db = getDatabase(app);
 
         let tools = [], categories = [], budgetHistory = [], budgetItems = [];
-
-        // Hacer funciones accesibles desde el HTML
-        window.login = () => {
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-password').value;
-            signInWithEmailAndPassword(auth, email, pass).catch(() => {
-                document.getElementById('auth-error').style.display = 'block';
-            });
-        };
-
-        window.logout = () => signOut(auth);
-
-        onAuthStateChanged(auth, user => {
- 
+<script/>
+    
