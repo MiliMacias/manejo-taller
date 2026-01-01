@@ -144,10 +144,18 @@ window.toggleLoan = function(i) {
 window.deleteTool = (i) => { if(confirm("¿Borrar?")) { tools.splice(i,1); syncCloud(); } };
 
 // --- PRESUPUESTOS ---
+// Modificamos el guardado de items para incluir el TIPO (Material/Mano de Obra)
 window.addBudgetItem = function() {
-    const d = document.getElementById('budget-item'), p = document.getElementById('budget-price');
+    const d = document.getElementById('budget-item'), 
+          p = document.getElementById('budget-price'),
+          t = document.getElementById('item-type');
+          
     if(d.value && p.value) {
-        budgetItems.push({ desc: d.value, price: parseFloat(p.value) });
+        budgetItems.push({ 
+            desc: d.value, 
+            price: parseFloat(p.value),
+            type: t.value 
+        });
         d.value = ''; p.value = ''; 
         renderBudget();
     }
@@ -158,27 +166,78 @@ function renderBudget() {
     let total = 0;
     body.innerHTML = budgetItems.map((item, i) => {
         total += item.price;
-        return `<tr><td>${item.desc}</td><td>$${item.price.toFixed(2)}</td><td onclick="removeBudgetItem(${i})" style="color:red; cursor:pointer">×</td></tr>`;
+        return `<tr>
+            <td><small>${item.type}</small></td>
+            <td>${item.desc}</td>
+            <td>$${item.price.toFixed(2)}</td>
+            <td onclick="removeBudgetItem(${i})" style="color:red; cursor:pointer">×</td>
+        </tr>`;
     }).join('');
     document.getElementById('budget-total').textContent = total.toFixed(2);
 }
 
-window.removeBudgetItem = (i) => { budgetItems.splice(i, 1); renderBudget(); };
-
 window.processAndSaveBudget = async function() {
     const client = document.getElementById('client-name').value || "Cliente General";
-    if(budgetItems.length === 0) return alert("Presupuesto vacío");
+    const clientInfo = document.getElementById('client-address').value || "N/A";
+    const provider = document.getElementById('provider-name').value || "Taller";
+    const providerContact = document.getElementById('provider-contact').value || "";
+    const workDate = document.getElementById('work-date').value || "A convenir";
+    
+    if(budgetItems.length === 0) return alert("Agrega materiales o mano de obra");
 
     const total = budgetItems.reduce((s, i) => s + i.price, 0);
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    doc.text(`Cliente: ${client}`, 20, 20);
-    budgetItems.forEach((it, idx) => doc.text(`${it.desc}: $${it.price}`, 20, 30 + (idx * 10)));
+
+    // --- ENCABEZADO Y FECHAS ---
+    doc.setFontSize(20);
+    doc.text("PRESUPUESTO DE TRABAJO", 105, 20, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.text(`Fecha de emisión: ${new Date().toLocaleDateString()}`, 150, 30);
+    doc.text(`Fecha est. de trabajo: ${workDate}`, 150, 35);
+
+    // --- BLOQUE DE CONTACTOS ---
+    doc.setFont("helvetica", "bold");
+    doc.text("DE (Presupuestador):", 20, 45);
+    doc.text("PARA (Cliente):", 110, 45);
+    
+    doc.setFont("helvetica", "normal");
+    doc.text(`${provider}`, 20, 50);
+    doc.text(`${providerContact}`, 20, 55);
+    
+    doc.text(`${client}`, 110, 50);
+    doc.text(`${clientInfo}`, 110, 55);
+
+    // --- TABLA DE COSTOS ---
+    doc.line(20, 65, 190, 65);
+    doc.setFont("helvetica", "bold");
+    doc.text("TIPO", 22, 72);
+    doc.text("DESCRIPCIÓN", 50, 72);
+    doc.text("SUBTOTAL", 160, 72);
+    doc.line(20, 75, 190, 75);
+
+    doc.setFont("helvetica", "normal");
+    let y = 82;
+    budgetItems.forEach((it) => {
+        doc.text(`${it.type}`, 22, y);
+        doc.text(`${it.desc}`, 50, y);
+        doc.text(`$${it.price.toFixed(2)}`, 160, y);
+        y += 8;
+    });
+
+    // --- TOTALES ---
+    doc.line(20, y, 190, y);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(`TOTAL FINAL: $${total.toFixed(2)}`, 130, y + 15);
+
+    // Guardar PDF
     doc.save(`Presupuesto_${client}.pdf`);
 
-    budgetHistory.push({ amount: total, date: new Date().toISOString() });
+    // Sincronizar con Firebase
+    budgetHistory.push({ amount: total, date: new Date().toISOString(), client: client });
     budgetItems = []; renderBudget();
-    document.getElementById('client-name').value = '';
     syncCloud();
 };
 
