@@ -57,26 +57,57 @@
             </section>
 
             <section class="card budget-area">
-                <h2>💰 Presupuestos</h2>
-                <div class="flex-row">
-                    <input type="text" id="budget-item" placeholder="Descripción">
-                    <input type="number" id="budget-price" placeholder="Precio">
-                    <button onclick="addBudgetItem()" class="btn-primary">Añadir</button>
-                </div>
-                <table id="budget-table">
-                    <thead>
-                        <tr><th>Descripción</th><th>Precio</th><th>Acción</th></tr>
-                    </thead>
-                    <tbody id="budget-body"></tbody>
-                </table>
-                <div class="budget-footer">
-                    <input type="text" id="client-name" placeholder="Nombre del Cliente">
-                    <div class="total-box">
-                        <h3>Total: $<span id="budget-total">0.00</span></h3>
-                        <button onclick="processAndSaveBudget()" class="btn-pdf">📄 PDF y Guardar</button>
-                    </div>
-                </div>
-            </section>
+    <h2>💰 Generador de Presupuestos Pro</h2>
+    
+    <div class="budget-grid">
+        <div class="group">
+            <h4>👤 Datos del Cliente</h4>
+            <input type="text" id="client-name" placeholder="Nombre del Cliente">
+            <input type="text" id="client-address" placeholder="Dirección/Teléfono">
+        </div>
+        <div class="group">
+            <h4>🛠️ Datos del Taller</h4>
+            <input type="text" id="provider-name" placeholder="Tu Nombre o Taller" value="Mi Taller Pro">
+            <input type="text" id="provider-contact" placeholder="Tu Contacto">
+        </div>
+    </div>
+
+    <div class="flex-row">
+        <div class="group">
+            <label>Fecha Estimada de Inicio:</label>
+            <input type="date" id="work-date">
+        </div>
+    </div>
+
+    <div class="flex-row">
+        <input type="text" id="budget-item" placeholder="Descripción (Material o Servicio)">
+        <input type="number" id="budget-price" placeholder="Precio">
+        <select id="item-type">
+            <option value="Material">📦 Material</option>
+            <option value="Mano de Obra">👨‍🔧 Mano de Obra</option>
+        </select>
+        <button onclick="addBudgetItem()" class="btn-primary">Añadir</button>
+    </div>
+
+    <table id="budget-table">
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody id="budget-body"></tbody>
+    </table>
+
+    <div class="budget-footer">
+        <div class="total-box">
+            <h3>Total: $<span id="budget-total">0.00</span></h3>
+            <button onclick="processAndSaveBudget()" class="btn-pdf">📄 Generar Presupuesto Profesional</button>
+        </div>
+    </div>
+</section>
         </main>
     </div>
 
