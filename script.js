@@ -24,18 +24,47 @@
   let tools = [], categories = [], budgetHistory = [], budgetItems = [];
 
   // --- SEGURIDAD Y LOGIN ---
-  window.login = function() {
+  window.login = async function() {
     const email = document.getElementById('login-email').value;
     const pass = document.getElementById('login-password').value;
-    signInWithEmailAndPassword(auth, email, pass)
-      .then(() => {
-          document.getElementById('auth-error').style.display = 'none';
-      })
-      .catch(err => {
-          console.error("Error de login:", err);
-          document.getElementById('auth-error').style.display = 'block';
-      });
-  }
+    const errorDiv = document.getElementById('auth-error');
+
+    // Limpiar mensaje previo y mostrar que está cargando
+    errorDiv.style.display = 'none';
+    errorDiv.style.color = "#e67e22"; // Color naranja mientras carga
+    errorDiv.innerText = "Verificando credenciales...";
+    errorDiv.style.display = 'block';
+
+    try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        // Si tiene éxito, el onAuthStateChanged se encargará de ocultar el login
+    } catch (error) {
+        console.error(error); // Lo dejamos en consola solo por si acaso
+        errorDiv.style.color = "red";
+        
+        // Traducción de errores comunes de Firebase
+        switch (error.code) {
+            case 'auth/invalid-email':
+                errorDiv.innerText = "❌ El formato del correo no es válido.";
+                break;
+            case 'auth/user-not-found':
+                errorDiv.innerText = "❌ No existe una cuenta con este correo.";
+                break;
+            case 'auth/wrong-password':
+                errorDiv.innerText = "❌ Contraseña incorrecta.";
+                break;
+            case 'auth/invalid-credential':
+                errorDiv.innerText = "❌ Correo o contraseña incorrectos.";
+                break;
+            case 'auth/too-many-requests':
+                errorDiv.innerText = "❌ Demasiados intentos. Intenta más tarde.";
+                break;
+            default:
+                errorDiv.innerText = "❌ Error: " + error.message;
+        }
+    }
+};
+
 
   window.logout = function() { 
     signOut(auth); 
