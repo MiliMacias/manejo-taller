@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taller Pro SaaS - Gestión Multiusuario</title>
+    <title>Taller Pro SaaS</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -28,12 +28,22 @@
                 <button onclick="logout()" class="btn-logout">Cerrar Sesión</button>
             </div>
             <div class="stats-card">
-                <span>Ganancias Reales (Concretadas):</span>
+                <span>Ganancias Reales:</span>
                 <strong id="monthly-earnings">$0.00</strong>
             </div>
         </header>
 
         <main>
+            <section class="card">
+                <h3>⚙️ Datos de mi Taller (Para el PDF)</h3>
+                <div class="flex-row">
+                    <input type="text" id="ws-name" placeholder="Nombre del Taller">
+                    <input type="text" id="ws-phone" placeholder="Teléfono">
+                    <input type="text" id="ws-address" placeholder="Dirección">
+                    <button onclick="saveWorkshopData()" class="btn-primary">Guardar Datos</button>
+                </div>
+            </section>
+
             <section class="card">
                 <h3>📦 Inventario y Categorías</h3>
                 <div class="category-manager">
@@ -63,11 +73,12 @@
                 <h2>💰 Calculadora de Presupuesto</h2>
                 <div class="budget-grid">
                     <div class="group">
-                        <label>Cliente</label>
+                        <label>Datos del Cliente</label>
                         <input type="text" id="client-name" placeholder="Nombre del Cliente">
+                        <input type="text" id="client-contact" placeholder="Teléfono/Email Cliente" style="margin-top:5px">
                     </div>
                     <div class="group">
-                        <label>Valor Hora / Gastos</label>
+                        <label>Costos Base</label>
                         <div class="flex-row">
                             <input type="number" id="hourly-rate" value="20" title="Valor Hora">
                             <input type="number" id="overhead-percent" value="10" title="% Gastos Fijos">
@@ -104,13 +115,7 @@
                 <div class="table-responsive">
                     <table class="history-table">
                         <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Cliente</th>
-                                <th>Total</th>
-                                <th>Estado</th>
-                                <th>Acción</th>
-                            </tr>
+                            <tr><th>Fecha</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Acción</th></tr>
                         </thead>
                         <tbody id="history-body"></tbody>
                     </table>
@@ -122,9 +127,9 @@
     <script type="module" src="main.js"></script>
 </body>
 </html>
-    </div>
 
     <script type="module" src="main.js"></script>
 </body>
 
 </html>
+
