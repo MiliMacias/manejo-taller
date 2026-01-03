@@ -17,25 +17,19 @@ const db = getDatabase(app);
 
 let tools = [], categories = [], budgetHistory = [], budgetItems = [];
 let userUID = null;
+let editingIndex = null;
 
-// --- AUTH MULTITALLER ---
+// --- AUTH ---
 window.login = () => {
     const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value;
     signInWithEmailAndPassword(auth, e, p).catch(err => alert("Error: " + err.message));
 };
-
 window.register = () => {
     const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value;
     createUserWithEmailAndPassword(auth, e, p).then(cred => {
-        // Inicializar datos para el nuevo usuario
-        set(ref(db, 'users/' + cred.user.uid), {
-            categories: ['Manual', 'Eléctrica', 'Neumática'],
-            tools: [],
-            history: []
-        });
+        set(ref(db, 'users/' + cred.user.uid), { categories: ['Manual', 'Eléctrica'], tools: [], history: [] });
     }).catch(err => alert("Error: " + err.message));
 };
-
 window.logout = () => signOut(auth);
 
 onAuthStateChanged(auth, (user) => {
@@ -50,7 +44,6 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// --- LÓGICA DE DATOS PRIVADOS ---
 function initApp() {
     onValue(ref(db, `users/${userUID}`), (snap) => {
         const data = snap.val() || {};
@@ -59,7 +52,7 @@ function initApp() {
         budgetHistory = data.history || [];
         renderCategories();
         renderTools();
-        updateEarnings();
+        renderHistory();
     });
 }
 
@@ -67,103 +60,166 @@ function sync() {
     update(ref(db, `users/${userUID}`), { tools, categories, history: budgetHistory });
 }
 
-// --- CALCULADORA AVANZADA ---
-window.addBudgetItem = () => {
-    const desc = document.getElementById('budget-item').value;
-    const price = parseFloat(document.getElementById('budget-price').value);
-    const type = document.getElementById('item-type').value;
-
-    if(desc && price) {
-        budgetItems.push({ desc, price, type });
-        calculateTotals();
-        renderBudget();
+// --- GESTIÓN CATEGORÍAS ---
+window.addCategory = () => {
+    const val = document.getElementById('new-category-name').value.trim();
+    if(val && !categories.includes(val)) {
+        categories.push(val);
+        document.getElementById('new-category-name').value = '';
+        sync(); renderCategories();
     }
 };
-
-function calculateTotals() {
-    const hRate = parseFloat(document.getElementById('hourly-rate').value) || 0;
-    const overhead = (parseFloat(document.getElementById('overhead-percent').value) || 0) / 100;
-    const materialMarkup = 1.20; // 20% de ganancia sobre materiales
-
-    let matSum = 0;
-    let laborSum = 0;
-
-    budgetItems.forEach(it => {
-        if(it.type === 'Material') matSum += (it.price * materialMarkup);
-        else laborSum += (it.price * hRate); // Aquí price actúa como "horas"
-    });
-
-    const subtotal = matSum + laborSum;
-    const total = subtotal * (1 + overhead);
-
-    document.getElementById('subtotal-val').textContent = subtotal.toFixed(2);
-    document.getElementById('budget-total').textContent = total.toFixed(2);
+window.deleteCategory = () => {
+    const val = document.getElementById('delete-category-select').value;
+    if(confirm(`¿Eliminar categoría "${val}"?`)) {
+        categories = categories.filter(c => c !== val);
+        sync(); renderCategories();
+    }
+};
+function renderCategories() {
+    const options = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+    document.getElementById('tool-category-select').innerHTML = options;
+    document.getElementById('delete-category-select').innerHTML = options;
+    document.getElementById('filter-category').innerHTML = '<option value="Todas">Todas</option>' + options;
 }
 
-// --- RENDERIZADO Y EXPORTACIÓN ---
+// --- HERRAMIENTAS ---
+document.getElementById('tool-form').onsubmit = (e) => {
+    e.preventDefault();
+    const toolData = {
+        name: document.getElementById('tool-name').value,
+        location: document.getElementById('tool-location').value,
+        category: document.getElementById('tool-category-select').value,
+        inUse: editingIndex !== null ? tools[editingIndex].inUse : false,
+        borrowedTo: editingIndex !== null ? tools[editingIndex].borrowedTo : ''
+    };
+    if (editingIndex !== null) { tools[editingIndex] = toolData; editingIndex = null; document.getElementById('submit-tool-btn').textContent = "Añadir Herramienta"; }
+    else { tools.push(toolData); }
+    sync(); e.target.reset();
+};
+
+window.editTool = (index) => {
+    editingIndex = index;
+    const t = tools[index];
+    document.getElementById('tool-name').value = t.name;
+    document.getElementById('tool-location').value = t.location;
+    document.getElementById('tool-category-select').value = t.category;
+    document.getElementById('submit-tool-btn').textContent = "Guardar Cambios";
+};
+
 window.renderTools = () => {
     const list = document.getElementById('tool-list');
     const search = document.getElementById('search-bar').value.toLowerCase();
-    list.innerHTML = tools.filter(t => t.name.toLowerCase().includes(search) || t.location.toLowerCase().includes(search)).map((t, i) => `
-        <div class="tool-card" style="border-left-color: ${t.inUse ? 'red' : 'green'}">
-            <span class="status-badge ${t.inUse ? 'in-use' : 'available'}">${t.inUse ? 'Ocupado' : 'Libre'}</span>
-            <h4>${t.name}</h4>
-            <p>📍 ${t.location || 'Sin ubicación'}</p>
-            <p>👤 ${t.borrowedTo || '-'}</p>
-            <button onclick="toggleLoan(${i})">${t.inUse ? 'Devolver' : 'Prestar'}</button>
-        </div>
-    `).join('');
+    const filterCat = document.getElementById('filter-category').value;
+    list.innerHTML = tools.map((t, i) => ({...t, idx: i}))
+        .filter(t => (t.name.toLowerCase().includes(search) || t.location.toLowerCase().includes(search)) && (filterCat === "Todas" || t.category === filterCat))
+        .map(t => `
+            <div class="tool-card" style="border-left: 5px solid ${t.inUse ? '#e74c3c' : '#2ecc71'}">
+                <h4>${t.name}</h4>
+                <p><small>${t.category}</small> | 📍 ${t.location}</p>
+                <div class="flex-row">
+                    <button onclick="toggleLoan(${t.idx})">${t.inUse ? 'Devolver' : 'Prestar'}</button>
+                    <button onclick="editTool(${t.idx})" class="btn-primary">✏️</button>
+                </div>
+            </div>`).join('');
 };
 
 window.toggleLoan = (i) => {
     if(!tools[i].inUse) {
         const p = prompt("¿Quién retira?");
         if(p) { tools[i].inUse = true; tools[i].borrowedTo = p; }
-    } else {
-        tools[i].inUse = false; tools[i].borrowedTo = '';
-    }
+    } else { tools[i].inUse = false; tools[i].borrowedTo = ''; }
     sync();
 };
 
-document.getElementById('tool-form').onsubmit = (e) => {
-    e.preventDefault();
-    tools.push({
-        name: document.getElementById('tool-name').value,
-        location: document.getElementById('tool-location').value,
-        category: document.getElementById('tool-category-select').value,
-        inUse: false
-    });
-    sync(); e.target.reset();
+// --- PRESUPUESTO ---
+window.addBudgetItem = () => {
+    const desc = document.getElementById('budget-item').value;
+    const price = parseFloat(document.getElementById('budget-price').value);
+    const type = document.getElementById('item-type').value;
+    if(desc && price) {
+        budgetItems.push({ desc, price, type });
+        document.getElementById('budget-item').value = '';
+        document.getElementById('budget-price').value = '';
+        renderBudget();
+    }
 };
 
-function renderCategories() {
-    document.getElementById('tool-category-select').innerHTML = categories.map(c => `<option>${c}</option>`).join('');
-}
+window.removeBudgetItem = (index) => {
+    budgetItems.splice(index, 1);
+    renderBudget();
+};
 
 function renderBudget() {
-    document.getElementById('budget-body').innerHTML = budgetItems.map((it, i) => `
-        <tr><td>${it.type}</td><td>${it.desc}</td><td>$${it.price}</td><td onclick="budgetItems.splice(${i},1);renderBudget();calculateTotals()">❌</td></tr>
-    `).join('');
+    const tbody = document.getElementById('budget-body');
+    tbody.innerHTML = budgetItems.map((it, i) => `
+        <tr>
+            <td>${it.type}</td>
+            <td>${it.desc}</td>
+            <td>$${it.price}</td>
+            <td><button onclick="removeBudgetItem(${i})" style="background:none; border:none; cursor:pointer;">❌</button></td>
+        </tr>`).join('');
+    calculateTotals();
+}
+
+function calculateTotals() {
+    const hRate = parseFloat(document.getElementById('hourly-rate').value) || 0;
+    const overhead = (parseFloat(document.getElementById('overhead-percent').value) || 0) / 100;
+    let subtotal = 0;
+    budgetItems.forEach(it => {
+        subtotal += (it.type === 'Material') ? (it.price * 1.20) : (it.price * hRate);
+    });
+    const total = subtotal * (1 + overhead);
+    document.getElementById('subtotal-val').textContent = subtotal.toFixed(2);
+    document.getElementById('budget-total').textContent = total.toFixed(2);
 }
 
 window.processAndSaveBudget = () => {
     const total = parseFloat(document.getElementById('budget-total').textContent);
     const client = document.getElementById('client-name').value || "Cliente";
-    
+    if(budgetItems.length === 0) return alert("Añade ítems al presupuesto");
+
+    // PDF mejorado
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    doc.text(`PRESUPUESTO - CLIENTE: ${client}`, 10, 10);
-    doc.text(`TOTAL FINAL: $${total}`, 10, 40);
+    doc.setFontSize(18); doc.text("PRESUPUESTO DE TRABAJO", 10, 20);
+    doc.setFontSize(12); doc.text(`Cliente: ${client}`, 10, 30);
+    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 10, 37);
+    let y = 50;
+    budgetItems.forEach(it => {
+        doc.text(`- ${it.desc} (${it.type}): $${it.price}`, 10, y);
+        y += 7;
+    });
+    doc.setFontSize(14); doc.text(`TOTAL FINAL: $${total.toFixed(2)}`, 10, y + 10);
     doc.save(`Presupuesto_${client}.pdf`);
 
-    budgetHistory.push({ amount: total, date: new Date().toISOString() });
-    budgetItems = []; renderBudget();
+    budgetHistory.push({ client, amount: total, date: new Date().toLocaleDateString(), status: 'Pendiente' });
+    budgetItems = []; renderBudget(); sync();
+};
+
+window.updateBudgetStatus = (i) => {
+    budgetHistory[i].status = budgetHistory[i].status === 'Pendiente' ? 'Concretado' : 'Pendiente';
     sync();
 };
 
-function updateEarnings() {
-    const total = budgetHistory.reduce((acc, h) => acc + h.amount, 0);
-    document.getElementById('monthly-earnings').textContent = `$${total.toFixed(2)}`;
+window.deleteBudget = (i) => {
+    if(confirm("¿Eliminar este registro?")) { budgetHistory.splice(i, 1); sync(); }
+};
+
+function renderHistory() {
+    let earnings = 0;
+    document.getElementById('history-body').innerHTML = budgetHistory.map((h, i) => {
+        if(h.status === 'Concretado') earnings += h.amount;
+        return `
+            <tr>
+                <td>${h.date}</td>
+                <td>${h.client}</td>
+                <td>$${h.amount.toFixed(2)}</td>
+                <td><button onclick="updateBudgetStatus(${i})" class="${h.status === 'Pendiente' ? 'btn-warn' : 'btn-success'}">${h.status}</button></td>
+                <td><button onclick="deleteBudget(${i})" class="btn-danger" style="padding:5px">🗑️</button></td>
+            </tr>`;
+    }).join('');
+    document.getElementById('monthly-earnings').textContent = `$${earnings.toFixed(2)}`;
 }
 
 document.getElementById('search-bar').oninput = () => renderTools();
