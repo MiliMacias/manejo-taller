@@ -203,3 +203,35 @@ function calculateTotals() {
 
     const total = subtotal * (1 + overhead);
     document.getElementById('subtotal-val').textContent =
+
+// --- CONECTOR DE BOTONES (Sin usar onclick en HTML) ---
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Botón de Login
+    const btnLogin = document.getElementById('btn-login-action');
+    if (btnLogin) {
+        btnLogin.addEventListener('click', () => {
+            const e = document.getElementById('login-email').value;
+            const p = document.getElementById('login-password').value;
+            window.login(e, p); // Llamamos a la función interna
+        });
+    }
+
+    // Botón de Registro
+    const btnRegister = document.getElementById('btn-register-action');
+    if (btnRegister) {
+        btnRegister.addEventListener('click', () => {
+            const e = document.getElementById('login-email').value;
+            const p = document.getElementById('login-password').value;
+            window.register(e, p);
+        });
+    }
+
+    // Botón de Logout
+    const btnLogout = document.getElementById('btn-logout-action');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+            window.logout();
+        });
+    }
+});
