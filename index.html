@@ -18,7 +18,6 @@
                 <button onclick="login()" class="btn-success">Entrar</button>
                 <button onclick="register()" class="btn-primary">Crear Taller</button>
             </div>
-            <p id="auth-error" style="color:red; display:none;"></p>
         </div>
     </div>
 
@@ -29,60 +28,92 @@
                 <button onclick="logout()" class="btn-logout">Cerrar Sesión</button>
             </div>
             <div class="stats-card">
-                <span>Ganancias Mes:</span>
+                <span>Ganancias Reales (Concretadas):</span>
                 <strong id="monthly-earnings">$0.00</strong>
             </div>
         </header>
 
         <main>
             <section class="card">
-                <h3>📦 Inventario y Ubicación</h3>
+                <h3>📦 Inventario y Categorías</h3>
+                <div class="category-manager">
+                    <input type="text" id="new-category-name" placeholder="Nueva Categoría">
+                    <button onclick="addCategory()" class="btn-primary">Añadir</button>
+                    <select id="delete-category-select"></select>
+                    <button onclick="deleteCategory()" class="btn-danger">Eliminar</button>
+                </div>
+
                 <form id="tool-form" class="flex-row">
                     <input type="text" id="tool-name" placeholder="Herramienta" required>
-                    <input type="text" id="tool-location" placeholder="Ubicación (Ej: Estante B2)">
+                    <input type="text" id="tool-location" placeholder="Ubicación">
                     <select id="tool-category-select"></select>
-                    <button type="submit" class="btn-success">Añadir</button>
+                    <button type="submit" id="submit-tool-btn" class="btn-success">Añadir Herramienta</button>
                 </form>
-                <input type="text" id="search-bar" placeholder="🔍 Buscar por nombre, poseedor o ubicación...">
+
+                <div class="flex-row">
+                    <input type="text" id="search-bar" placeholder="🔍 Buscar...">
+                    <select id="filter-category" onchange="renderTools()">
+                        <option value="Todas">Todas las categorías</option>
+                    </select>
+                </div>
                 <div id="tool-list" class="grid-container"></div>
             </section>
 
             <section class="card budget-area">
-                <h2>💰 Calculadora de Presupuesto Profesional</h2>
+                <h2>💰 Calculadora de Presupuesto</h2>
                 <div class="budget-grid">
                     <div class="group">
                         <label>Cliente</label>
-                        <input type="text" id="client-name" placeholder="Nombre">
-                        <input type="text" id="client-info" placeholder="Contacto">
+                        <input type="text" id="client-name" placeholder="Nombre del Cliente">
                     </div>
                     <div class="group">
-                        <label>Configuración de Costos</label>
-                        <input type="number" id="hourly-rate" placeholder="Valor Hora ($)" value="20">
-                        <input type="number" id="overhead-percent" placeholder="Gasto Fijo (%)" value="10">
+                        <label>Valor Hora / Gastos</label>
+                        <div class="flex-row">
+                            <input type="number" id="hourly-rate" value="20" title="Valor Hora">
+                            <input type="number" id="overhead-percent" value="10" title="% Gastos Fijos">
+                        </div>
                     </div>
                 </div>
 
                 <div class="flex-row">
                     <input type="text" id="budget-item" placeholder="Descripción">
-                    <input type="number" id="budget-price" placeholder="Costo Base">
+                    <input type="number" id="budget-price" placeholder="Costo/Horas">
                     <select id="item-type">
-                        <option value="Material">📦 Material (incluye +20% margen)</option>
-                        <option value="Labor">👨‍🔧 Mano de Obra (horas)</option>
+                        <option value="Material">📦 Material (+20%)</option>
+                        <option value="Labor">👨‍🔧 Mano Obra (Hs)</option>
                     </select>
                     <button onclick="addBudgetItem()" class="btn-primary">Añadir</button>
                 </div>
 
-                <table id="budget-table">
+                <table class="history-table">
                     <thead>
-                        <tr><th>Tipo</th><th>Detalle</th><th>Costo</th><th>Acción</th></tr>
+                        <tr><th>Tipo</th><th>Detalle</th><th>Costo/Hs</th><th>Acción</th></tr>
                     </thead>
                     <tbody id="budget-body"></tbody>
                 </table>
 
                 <div class="total-box">
                     <p>Subtotal: $<span id="subtotal-val">0.00</span></p>
-                    <h3>TOTAL ESTIMADO: $<span id="budget-total">0.00</span></h3>
-                    <button onclick="processAndSaveBudget()" class="btn-pdf">Generar e Imprimir</button>
+                    <h3>TOTAL: $<span id="budget-total">0.00</span></h3>
+                    <button onclick="processAndSaveBudget()" class="btn-pdf">Generar PDF y Guardar</button>
+                </div>
+            </section>
+
+            <section class="card">
+                <h3>📋 Historial de Presupuestos</h3>
+                <div class="table-responsive">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body"></tbody>
+                    </table>
                 </div>
             </section>
         </main>
@@ -90,4 +121,10 @@
 
     <script type="module" src="main.js"></script>
 </body>
+</html>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+
 </html>
